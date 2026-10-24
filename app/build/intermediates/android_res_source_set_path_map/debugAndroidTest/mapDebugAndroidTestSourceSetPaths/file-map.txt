@@ -1,0 +1,5 @@
+com.aiinterviewtrainer.test.app-androidTest-0 C:\Interview trainer\AIInterviewTrainer\app\build\generated\res\resValues\androidTest\debug
+com.aiinterviewtrainer.test.app-updated_navigation_xml-1 C:\Interview trainer\AIInterviewTrainer\app\build\generated\updated_navigation_xml\debugAndroidTest
+com.aiinterviewtrainer.test.app-mergeDebugAndroidTestResources-2 C:\Interview trainer\AIInterviewTrainer\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
+com.aiinterviewtrainer.test.app-mergeDebugAndroidTestResources-3 C:\Interview trainer\AIInterviewTrainer\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
+com.aiinterviewtrainer.test.app-debugAndroidTest-4 C:\Interview trainer\AIInterviewTrainer\app\build\intermediates\merged_res\debugAndroidTest\mergeDebugAndroidTestResources
