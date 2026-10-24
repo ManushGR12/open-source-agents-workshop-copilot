@@ -1,125 +1,149 @@
-# TShoot — Autonomous Technical Troubleshooter Agent
+# 🛠️ TShoot — Autonomous Technical Troubleshooter Agent
 
-> An autonomous, security-hardened multi-agent co-pilot built with the Google Agent Development Kit (ADK) that diagnoses and resolves hands-on technical roadblocks during live Google Meet and Microsoft Teams workshops.
-
----
-
-## Overview
-
-### Problem Statement & Intended Users
-- **Problem**: During hands-on technical workshops, hackathons, and virtual training calls (Google Meet, Microsoft Teams), attendees frequently encounter roadblocks—such as Google Account 403 login failures, OAuth `redirect_uri_mismatch`, port conflicts (`WinError 10048`), corporate proxy blocks, Python deprecations, or invalid API keys. Instructors presenting cannot stop the live session to individually debug 50+ participants in chat.
-- **Intended Users**: Workshop attendees, virtual lab participants, instructors, teaching assistants (TAs), and community organizers (e.g., GDG events).
-
-### Key Features
-- **Visual Screenshot Inspector**: Drag & drop, browse, or paste (`Ctrl+V`) a screenshot of where you are stuck. TShoot automatically parses image dimensions, detects error context, and runs autonomous triage.
-- **Multi-Agent Collaborative Architecture**:
-  - **Auth Specialist**: Diagnoses Google Account 403, OAuth redirect URI mismatch, and credential anomalies.
-  - **Network Specialist**: Pings `accounts.google.com`, GenAI endpoints, and PyPI to detect corporate proxy/firewall intercepts.
-  - **Web Search Specialist**: For the "Others" category or rare errors, searches developer forums (StackOverflow, GitHub Issues, official docs) and provides verified fixes with source links.
-  - **Deep Investigator Specialist**: Multi-tier deep diagnostic engine (Tier 1: cache purge/virtualenv rebuild, Tier 2: dependency flags, Tier 3: socket mitigation) with consent-based progressive resolution.
-  - **Remediation Specialist**: Generates platform-specific (Windows PowerShell, macOS, Linux) shell commands.
-- **Interactive Resolution Feedback Loop**: Prompts attendees *"Did this solve your issue?"* and loops with progressive deep investigation until the issue is solved.
-- **Chat Escalation Protocol**: One-click formatted message generation for Google Meet / Microsoft Teams chat when human host action is required.
-- **OWASP Enterprise Security**:
-  - Automatic secret redactor scrubs API keys from logs and inputs.
-  - OWASP XSS defense & HTML entity sanitization.
-  - In-memory sliding-window IP rate limiting (40 req/min).
-  - Parameterized SQLite persistence (zero SQL injection).
-  - Debug mode strictly turned OFF (`debug=False`).
+> An autonomous multi-agent co-pilot designed to instantly diagnose and resolve attendee roadblocks during live workshops, hackathons, and virtual training calls (Google Meet / Microsoft Teams).
 
 ---
 
-## Technical Stack
+## 📌 Problem & Purpose
 
-- **Language & Runtime**: Python 3.10+ (tested on Python 3.12)
-- **Agent Framework**: **Google Agent Development Kit (ADK)** (`google-adk`), using the **COLLAB Multi-Agent Pattern** (Coordinator + Specialized Sub-Agents)
-- **Web & API Framework**: FastAPI (production hardened), Uvicorn, Pydantic v2
-- **Image Processing**: Pillow (PIL)
-- **Storage**: Parameterized SQLite (`sqlite3`) for persistent tickets and audit logs
+During live coding workshops or hackathons with 50+ participants:
+- Attendees hit unexpected roadblocks: Google login failures (Error 403), OAuth redirect mismatches, port conflicts (`WinError 10048`), corporate proxy blocks, Python version issues, or missing dependencies.
+- Instructors presenting on stage cannot stop the session to troubleshoot each attendee individually in chat.
+- **TShoot** acts as an autonomous technical assistant: attendees can describe their error or upload a screenshot, and TShoot provides instant step-by-step solutions, fetches internet documentation for custom errors, and runs progressive deep diagnostics until the problem is solved.
 
 ---
 
-## Architecture & Data Flow
+## ✨ Key Features
 
+1. **Visual Screenshot Inspector**:
+   - Drag & drop, browse, or directly paste (`Ctrl + V`) an error screenshot.
+   - Automatically detects the error context and triggers instant diagnosis.
+
+2. **Multi-Agent Collaboration**:
+   - **Auth Specialist**: Solves Google Account 403, OAuth redirect URI mismatch, and expired tokens.
+   - **Network Specialist**: Pings `accounts.google.com`, GenAI endpoints, and PyPI to detect firewall/proxy blocks.
+   - **Web Search Specialist**: For the **"Others"** category, fetches solutions from developer forums (StackOverflow, GitHub Issues, official docs) with clickable source links.
+   - **Deep Investigator Specialist**: Multi-tier diagnostic engine (environment variables, cache purge, socket bypass) for stubborn issues.
+   - **Remediation Specialist**: Generates copy-pasteable terminal commands for Windows (PowerShell), macOS, and Linux.
+
+3. **Interactive "Solved or Not?" Loop**:
+   - Asks: *"Did this solution resolve your issue?"*
+   - If not resolved, requests attendee permission to perform **Deep Autonomous Investigation** and guides them with isolated clean-slate scripts until unblocked.
+
+4. **One-Click Chat Escalation**:
+   - When human instructor action is required (e.g. granting GCP IAM roles), formats a ready-to-paste message for Google Meet or Microsoft Teams chat.
+
+5. **Enterprise Security Hardening**:
+   - **Zero Secret Leaks**: Automatically redacts API keys and bearer tokens from logs and user inputs.
+   - **OWASP XSS Protection**: Strict input sanitization and HTML entity encoding.
+   - **Rate Limiting**: Sliding-window rate limiter (40 requests/minute per IP) prevents abuse.
+   - **Debug Disabled**: `debug=False` ensures zero internal stack traces or environment leaks.
+
+---
+
+## 🏗️ System Architecture
+
+```text
+[Attendee Input: Terminal Text or Screenshot (Ctrl+V)]
+                       │
+                       ▼
+          [OWASP Security Middleware]
+     (Secret Redactor + XSS Sanitizer + Rate Limiter)
+                       │
+                       ▼
+          [TShoot Coordinator Agent]
+                       │
+     ┌─────────────────┼─────────────────┬────────────────┐
+     ▼                 ▼                 ▼                ▼
+[Auth Specialist]  [Network Spec]  [Web Search Spec]  [Deep Investigator]
+ (Login & OAuth)   (Socket Pings)  (Internet Forums)   (Multi-Tier Fix)
+                       │
+                       ▼
+  [Step-by-Step Remediation + Copy-Paste Shell Commands]
+                       │
+         [Did this solve your issue?]
+         ├── Yes ──► Issue marked resolved 🎉
+         └── No  ──► Request consent for Deep Investigation ⚙️
 ```
-[Attendee Error / Screenshot / Query]
-               │
-               ▼
-   [OWASP Security Middleware] ───► [Secret Scrubber & XSS Sanitizer] ───► [Rate Limiter]
-               │
-               ▼
-   [TShoot Multi-Agent Coordinator]
-         │
-         ├───► [Auth Specialist] ──────────────► diagnose_login_issue()
-         ├───► [Network Specialist] ───────────► check_service_connectivity()
-         ├───► [Web Search Specialist] ────────► search_internet_solutions()
-         ├───► [Deep Investigator Specialist] ─► deep_troubleshoot_investigation()
-         ├───► [Remediation Specialist] ───────► get_safe_remediation_commands()
-         └───► [Escalation Specialist] ────────► create_instructor_ticket()
-               │
-               ▼
-[Step-by-Step Remediation Plan with Code Snippets & Clickable Sources]
+
+---
+
+## 🚀 Quick Start Guide
+
+### Prerequisites
+- **Python 3.10+** (Tested on Python 3.12)
+- **pip** package manager
+- Web browser (Chrome, Edge, Firefox, or Safari)
+
+### 1. Clone & Navigate to Project
+```bash
+git clone https://github.com/ManushGR12/open-source-agents-workshop-copilot.git
+cd open-source-agents-workshop-copilot/agents/workshop-troubleshooter
 ```
 
----
+### 2. Set Up Virtual Environment & Dependencies
 
-## Prerequisites
+- **On Windows (PowerShell):**
+  ```powershell
+  python -m venv .venv
+  .venv\Scripts\activate
+  pip install -r requirements.txt
+  ```
 
-- Python 3.10+
-- `pip` package manager
-- Modern Web Browser (Chrome, Edge, Firefox, Safari)
+- **On macOS / Linux:**
+  ```bash
+  python3 -m venv .venv
+  source .venv/bin/activate
+  pip install -r requirements.txt
+  ```
 
----
+### 3. Configure Environment Variables
+```bash
+cp .env.example .env
+```
+*(Optional: Add your `GOOGLE_API_KEY` in `.env` if you wish to use live Google Gemini model generation).*
 
-## Installation & Setup
-
-1. **Navigate to the agent directory:**
-   ```bash
-   cd agents/workshop-troubleshooter
-   ```
-
-2. **Set up a virtual environment and install dependencies:**
-   ```bash
-   # Windows (PowerShell):
-   python -m venv .venv
-   .venv\Scripts\activate
-   pip install -r requirements.txt
-
-   # Linux / macOS:
-   python3 -m venv .venv
-   source .venv/bin/activate
-   pip install -r requirements.txt
-   ```
-
-3. **Configure Environment Variables:**
-   ```bash
-   cp .env.example .env
-   ```
-
----
-
-## Running TShoot
-
-Start the TShoot server from the agent directory:
+### 4. Run the TShoot Web Application
 ```bash
 python -m uvicorn app:app --host 127.0.0.1 --port 8000
 ```
-Open **`http://127.0.0.1:8000`** in your browser to access the interactive portal.
+Open **`http://127.0.0.1:8000`** in your browser.
 
 ---
 
-## Quality & Security Audit
+## 🧪 Running Security Audit
 
-Verify against the 8 OWASP security benchmarks:
+To verify the agent against the 8 OWASP security benchmarks:
 ```bash
 python security_audit.py
 ```
-Score: **100% (Grade: A+)** with 8/8 security benchmarks passing.
+**Result**: 8/8 Tests Passed (Grade: A+).
 
 ---
 
-## Contributing
+## 📂 Project Directory Structure
 
-This agent is packaged according to the community contribution guidelines:
-- Dedicated self-contained folder: `agents/workshop-troubleshooter/`
-- Zero tracked secrets, clean `.gitignore`, `.env.example`, and full reproducibility.
+```text
+agents/workshop-troubleshooter/
+├── .env.example         # Template environment variables
+├── .gitignore           # Ignores credentials, secrets, and local databases
+├── requirements.txt     # Python dependencies
+├── README.md            # Project documentation
+├── agent.py             # Google ADK multi-agent coordinator & sub-agents
+├── app.py               # Hardened FastAPI backend & API endpoints
+├── tools.py             # Diagnostic tools, web search, and deep investigation
+├── database.py          # Parameterized SQLite store for escalation tickets
+├── security.py          # Rate limiter, secret scrubber, and OWASP headers
+├── security_audit.py    # Automated 8-point security testing suite
+└── static/              # Frontend web portal
+    ├── index.html       # Single-page interface with screenshot upload zone
+    ├── app.css          # Glassmorphic dark cyber-theme styling
+    └── app.js           # Client-side multi-agent triage logic & drag-and-drop
+```
+
+---
+
+## 👥 Authors & Acknowledgments
+
+- **Author**: Manush G R ([@ManushGR12](https://github.com/ManushGR12))
+- Built with [Google Agent Development Kit (ADK)](https://github.com/google/agent-development-kit) and FastAPI.
